@@ -85,7 +85,7 @@ param(
 $ErrorActionPreference = 'Continue'
 
 # ============================ TOOL METADATA / STATE ================================
-$script:ToolVersion   = '3.4.1'
+$script:ToolVersion   = '3.4.2'
 $script:SchemaVersion = 9
 $script:Findings = New-Object System.Collections.ArrayList
 $script:Errors   = New-Object System.Collections.ArrayList
@@ -237,7 +237,7 @@ function Get-CimSafe {
 # Get-HotFix cached once (oea patching + system hotfix list) - it takes ~1.5 s.
 function Get-HotFixCached {
     if ($null -ne $script:HotFixCache) { return ,$script:HotFixCache }
-    $hf = @(); try { $hf = @(Get-HotFix -ErrorAction Stop | Sort-Object InstalledOn -Descending) } catch { $hf = @() }
+    $hf = @(); try { $hf = @(Get-HotFix -ErrorAction Stop | Sort-Object { try { $_.InstalledOn } catch { [datetime]::MinValue } } -Descending) } catch { $hf = @() }   # some hotfixes carry an unparseable InstalledOn (seen in practice: Sort-Object's own lazy evaluation of the property throws and silently drops that item) - never silently lose one, sort it last instead
     $script:HotFixCache = $hf
     return ,$hf
 }
@@ -3060,7 +3060,7 @@ function Get-PatchingState {
         $hf = Get-HotFixCached
         $patchCount = @($hf).Count
         $u = $hf | Select-Object -First 1
-        if ($u) { $lastPatch = $u.HotFixID; $lastPatchAt = $u.InstalledOn }   # keep [datetime] (no locale round-trip)
+        if ($u) { $lastPatch = $u.HotFixID; $lastPatchAt = try { $u.InstalledOn } catch { $null } }   # keep [datetime] (no locale round-trip); InstalledOn can throw on a malformed WMI date
     } catch { }
     $wu = $null
     try { $wu = (Get-Service wuauserv -ErrorAction Stop).StartType.ToString() } catch { }
@@ -3111,7 +3111,7 @@ function Get-SystemState {
     if ($pauseUntil -and ($d = Get-DaysUntil $pauseUntil) -ne $null -and $d -ge 0) { Add-Finding -Code 'windows_update_paused' -Severity 'medium' -Oea @('9.7') -Message "Actualizaciones de Windows PAUSADAS hasta el $pauseUntil." }
 
     $hfList = Get-HotFixCached   # assign first: piping the ,@() result directly would pass the whole array as ONE object
-    $hotfixes = @($hfList | ForEach-Object { [ordered]@{ provider_hotfix_id = "$($_.HotFixID)"; installed_date = ConvertTo-IsoDate $_.InstalledOn } })
+    $hotfixes = @($hfList | ForEach-Object { $installedAt = try { $_.InstalledOn } catch { $null }; [ordered]@{ provider_hotfix_id = "$($_.HotFixID)"; installed_date = ConvertTo-IsoDate $installedAt } })
     $patching = Get-PatchingState
     return [ordered]@{ system = [ordered]@{ reboot = $reboot; windows_update = $wu; patching = $patching; hotfixes = $hotfixes; startup_items = $startup; scheduled_tasks = $tasks; services = $services } }
 }
