@@ -3532,6 +3532,7 @@ if ($script:Interactive) {
 # Merge every audit JSON in a folder into one CSV (one row per endpoint). Read-only on inputs.
 if ($Consolidate) {
     $inFolder = if ([string]::IsNullOrWhiteSpace($Path)) { if ($MyInvocation.MyCommand.Path) { Split-Path -Parent $MyInvocation.MyCommand.Path } else { $null } } else { $Path }
+    if (-not $inFolder) { $inFolder = [Environment]::GetFolderPath('Desktop') }   # irm|iex: no script file, "current dir" could be System32 when elevated
     if (-not $inFolder) { $inFolder = (Get-Location).Path }
     $outCsv = Join-Path $inFolder '_netlogic-signal-master.csv'
 
@@ -3915,6 +3916,7 @@ $script:IsAdmin = $isAdmin   # module-visible (oea uses it for secedit/auditpol 
 
 # Resolve output folder + module list.
 $scriptDir = if ($MyInvocation.MyCommand.Path) { Split-Path -Parent $MyInvocation.MyCommand.Path } else { $null }
+if (-not $scriptDir) { $scriptDir = [Environment]::GetFolderPath('Desktop') }   # irm|iex: no script file, "current dir" could be System32 when elevated
 if (-not $scriptDir) { $scriptDir = (Get-Location).Path }
 if ([string]::IsNullOrWhiteSpace($OutputPath)) { $OutputPath = $scriptDir }
 if (-not (Test-Path $OutputPath)) { try { New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null } catch { $OutputPath = $scriptDir } }
