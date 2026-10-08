@@ -100,7 +100,7 @@ param(
 $ErrorActionPreference = 'Continue'
 
 # ============================ TOOL METADATA / STATE ================================
-$script:ToolVersion   = '3.4.0'
+$script:ToolVersion   = '3.4.1'
 $script:SchemaVersion = 9
 $script:Findings = New-Object System.Collections.ArrayList
 $script:Errors   = New-Object System.Collections.ArrayList
@@ -3546,7 +3546,7 @@ if ($script:Interactive) {
 # ============================ CONSOLIDATE MODE ====================================
 # Merge every audit JSON in a folder into one CSV (one row per endpoint). Read-only on inputs.
 if ($Consolidate) {
-    $inFolder = if ([string]::IsNullOrWhiteSpace($Path)) { Split-Path -Parent $MyInvocation.MyCommand.Path } else { $Path }
+    $inFolder = if ([string]::IsNullOrWhiteSpace($Path)) { if ($MyInvocation.MyCommand.Path) { Split-Path -Parent $MyInvocation.MyCommand.Path } else { $null } } else { $Path }
     if (-not $inFolder) { $inFolder = (Get-Location).Path }
     $outCsv = Join-Path $inFolder '_netlogic-signal-master.csv'
 
@@ -3929,7 +3929,7 @@ $isAdmin = Test-IsAdmin
 $script:IsAdmin = $isAdmin   # module-visible (oea uses it for secedit/auditpol branches)
 
 # Resolve output folder + module list.
-$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$scriptDir = if ($MyInvocation.MyCommand.Path) { Split-Path -Parent $MyInvocation.MyCommand.Path } else { $null }
 if (-not $scriptDir) { $scriptDir = (Get-Location).Path }
 if ([string]::IsNullOrWhiteSpace($OutputPath)) { $OutputPath = $scriptDir }
 if (-not (Test-Path $OutputPath)) { try { New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null } catch { $OutputPath = $scriptDir } }
