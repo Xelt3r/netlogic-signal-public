@@ -21,6 +21,12 @@ políticas de cuenta) quedan sin medir.
 Te va a preguntar interactivamente: nombre de la empresa, tu nombre, y qué tipo de revisión
 querés (Completa / Hardware / Inventario / Rendimiento / Seguridad).
 
+> ⚠️ **El JSON se guarda como `<tu nombre>-<equipo>.json`** (ej. `Rod-ROD-PC.json`) en el Escritorio.
+> Si volvés a correrlo con el mismo nombre en la misma PC, **pisa el archivo anterior sin avisar**
+> (no hay confirmación ni backup automático). Si querés conservar una corrida anterior — por
+> ejemplo para compararla después con `-Compare` — renombrala o movela a otra carpeta antes de
+> volver a correr la herramienta.
+
 ### Método 2 — Manual (descargar y ejecutar)
 
 Bajá el archivo y hacé doble clic — se auto-eleva a administrador y abre el mismo menú que el
@@ -114,6 +120,12 @@ ni instalar nada más):
 ```powershell
 .\Invoke-NetLogicSignal.ps1 -Compare -Baseline "revision-anterior.json" -Current "revision-nueva.json"
 ```
+
+> ⚠️ Para que esto funcione, el JSON de la corrida anterior tiene que seguir existiendo bajo otro
+> nombre o en otra carpeta — recordá que, como se explicó arriba, correr la herramienta de nuevo
+> en la misma PC **pisa el `<usuario>-<equipo>.json` anterior**. El flujo típico: corré, renombrá
+> ese archivo (agregale la fecha, por ejemplo), esperá al próximo mantenimiento, corré de nuevo, y
+> recién ahí comparás el nuevo contra el que guardaste.
 
 Es un **veredicto comparativo**, no solo un diff de datos — te dice explícitamente qué **mejoró**,
 qué **empeoró** y qué **sigue igual** respecto a la última vez:
